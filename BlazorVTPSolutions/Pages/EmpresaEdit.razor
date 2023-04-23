@@ -1,0 +1,78 @@
+﻿@page "/empresas/{oid}"
+@using BlazorVTPSolutions.DTOs;
+@using BlazorVTPSolutions.Services;
+@using Microsoft.AspNetCore.Html;
+@inherits ComponentBase
+@inject Services.IEmpresaService EmpresaService;
+@inject Services.ISegmentoService SegmentoService;
+@inject NavigationManager Navigation
+
+<h2>Editar empresa</h2>
+
+<div class="form-group">
+    <label for="nome">Nome:</label>
+    <input class="form-control" id="nome" @bind-value="@empresa.Nome" />
+</div>
+
+<div class="form-group">
+    <label for="site">Site:</label>
+    <input class="form-control" id="site" @bind-value="@empresa.Site" />
+</div>
+
+<div class="form-group">
+    <label for="segmento">Segmento:</label>
+    <select class="form-select" id="segmento" @bind="@empresa.SegmentoEmpresa.oid" @oninput="mudarSegmento">
+        @if (segmentos != null)
+        {
+            @foreach (var segmento in segmentos)
+            {
+                <option value="@segmento.oid">@segmento.Nome</option>
+            }
+        }
+    </select>
+
+    <style>
+        select option:checked {
+            background-color: gray;
+        }
+    </style>
+</div>
+
+<br>
+<button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+<button class="btn btn-dark" @onclick="@(() => Navigation.NavigateTo("/"))">Cancelar</button>
+
+@code {
+    [Parameter]
+    public string oid { get; set; }
+    private string segmentoSelecionado;
+    string ErrorMessage;
+
+    Empresa empresa = new Empresa();
+    List<Segmento> segmentos;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        empresa = await EmpresaService.GetEmpresaAsync(oid);
+        segmentos = await SegmentoService.GetSegmentosAsync();
+        segmentoSelecionado = empresa.SegmentoEmpresa.oid;
+    }
+
+    private void mudarSegmento(ChangeEventArgs args)
+    {
+        var novoOid = (string)args.Value;
+        var novoSegmento = segmentos.FirstOrDefault(s => s.oid == novoOid);
+        if (novoSegmento != null)
+        {
+            empresa.SegmentoEmpresa = novoSegmento;
+        }
+    }
+
+    private async Task Salvar()
+    {  
+        await EmpresaService.UpdateEmpresaAsync(empresa);
+        Navigation.NavigateTo("/");
+    }
+}
+

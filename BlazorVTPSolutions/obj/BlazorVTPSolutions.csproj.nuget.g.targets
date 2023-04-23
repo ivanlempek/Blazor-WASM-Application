@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)system.text.json\6.0.7\buildTransitive\netcoreapp3.1\System.Text.Json.targets" Condition="Exists('$(NuGetPackageRoot)system.text.json\6.0.7\buildTransitive\netcoreapp3.1\System.Text.Json.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.extensions.logging.abstractions\6.0.3\buildTransitive\netcoreapp3.1\Microsoft.Extensions.Logging.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.extensions.logging.abstractions\6.0.3\buildTransitive\netcoreapp3.1\Microsoft.Extensions.Logging.Abstractions.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.aspnetcore.components.analyzers\6.0.15\buildTransitive\netstandard2.0\Microsoft.AspNetCore.Components.Analyzers.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.aspnetcore.components.analyzers\6.0.15\buildTransitive\netstandard2.0\Microsoft.AspNetCore.Components.Analyzers.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.aspnetcore.components.webassembly.devserver\6.0.13\build\Microsoft.AspNetCore.Components.WebAssembly.DevServer.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.aspnetcore.components.webassembly.devserver\6.0.13\build\Microsoft.AspNetCore.Components.WebAssembly.DevServer.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.core\6.0.20231.491\buildTransitive\C1.Blazor.Core.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.core\6.0.20231.491\buildTransitive\C1.Blazor.Core.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.listview\6.0.20231.491\buildTransitive\C1.Blazor.ListView.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.listview\6.0.20231.491\buildTransitive\C1.Blazor.ListView.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.input\6.0.20231.491\buildTransitive\C1.Blazor.Input.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.input\6.0.20231.491\buildTransitive\C1.Blazor.Input.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.menu\6.0.20231.491\buildTransitive\C1.Blazor.Menu.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.menu\6.0.20231.491\buildTransitive\C1.Blazor.Menu.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.gridcontrol\6.0.20231.491\buildTransitive\C1.Blazor.GridControl.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.gridcontrol\6.0.20231.491\buildTransitive\C1.Blazor.GridControl.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.calendar\6.0.20231.491\buildTransitive\C1.Blazor.Calendar.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.calendar\6.0.20231.491\buildTransitive\C1.Blazor.Calendar.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.datetimeeditors\6.0.20231.491\buildTransitive\C1.Blazor.DateTimeEditors.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.datetimeeditors\6.0.20231.491\buildTransitive\C1.Blazor.DateTimeEditors.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.accordion\6.0.20231.491\buildTransitive\C1.Blazor.Accordion.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.accordion\6.0.20231.491\buildTransitive\C1.Blazor.Accordion.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.datafilter\6.0.20231.491\buildTransitive\C1.Blazor.DataFilter.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.datafilter\6.0.20231.491\buildTransitive\C1.Blazor.DataFilter.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.grid\6.0.20231.491\buildTransitive\C1.Blazor.Grid.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.grid\6.0.20231.491\buildTransitive\C1.Blazor.Grid.targets')" />
+    <Import Project="$(NuGetPackageRoot)c1.blazor.datapager\6.0.20231.491\buildTransitive\C1.Blazor.DataPager.targets" Condition="Exists('$(NuGetPackageRoot)c1.blazor.datapager\6.0.20231.491\buildTransitive\C1.Blazor.DataPager.targets')" />
+  </ImportGroup>
+</Project>

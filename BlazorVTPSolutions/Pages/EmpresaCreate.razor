@@ -1,0 +1,85 @@
+﻿@page "/empresas/criar"
+@using BlazorVTPSolutions.DTOs;
+@using BlazorVTPSolutions.Services;
+@using Microsoft.AspNetCore.Html;
+@using Blazorise;
+@inherits ComponentBase
+@inject Services.IEmpresaService EmpresaService;
+@inject Services.ISegmentoService SegmentoService;
+@inject NavigationManager Navigation
+
+<h2>Criar empresa</h2>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger"><i class="fas fa-exclamation-circle" style="padding-right: 5px;"></i>@ErrorMessage</div>
+}   
+
+<div class="form-group">
+    <label for="nome">Nome:</label>
+    <input class="form-control" id="nome" @bind-value="@empresa.Nome" />
+</div>
+
+<div class="form-group">
+    <label for="site">Site:</label>
+    <input class="form-control" id="site" @bind-value="@empresa.Site" />
+</div>
+
+<div class="form-group">
+    <label for="segmento">Segmento:</label>
+    <select class="form-select" id="segmento" @bind="@empresa.SegmentoEmpresa.oid" @oninput="mudarSegmento">
+        <option style="display: none;" value="">Selecione</option>
+        @if (segmentos != null)
+        {
+            @foreach (var segmento in segmentos)
+            {
+                <option value="@segmento.oid">@segmento.Nome</option>
+            }
+        }
+    </select>
+
+    <style>
+        select option:checked {
+            background-color: gray;
+        }
+    </style>
+</div>
+
+<br>
+<button class="btn btn-primary" @onclick="Criar">Criar</button>
+<button class="btn btn-dark" @onclick="@(() => Navigation.NavigateTo("/"))">Cancelar</button>
+
+@code {
+    Empresa empresa = new Empresa();
+    List<Segmento> segmentos;
+    string ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        segmentos = await SegmentoService.GetSegmentosAsync();
+    }
+
+    private void mudarSegmento(ChangeEventArgs args)
+    {
+        var novoOid = (string)args.Value;
+        var novoSegmento = segmentos.FirstOrDefault(s => s.oid == novoOid);
+        if (novoSegmento != null)
+        {
+            empresa.SegmentoEmpresa = novoSegmento;
+        }
+    }
+
+    private async Task Criar()
+    {
+        var (empresas, _) = await EmpresaService.GetEmpresasAsync(page: 1, pageSize: int.MaxValue);
+        if (empresas.Any(e => e.Nome == empresa.Nome))
+        {
+            ErrorMessage = "Já existe uma empresa com o mesmo nome.";
+        }
+        else
+        {
+            await EmpresaService.CreateEmpresaAsync(empresa);
+            Navigation.NavigateTo("/");
+        }
+    }
+}

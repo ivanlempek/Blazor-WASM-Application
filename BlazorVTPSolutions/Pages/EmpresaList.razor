@@ -1,0 +1,260 @@
+﻿@page "/"
+@using BlazorVTPSolutions.DTOs;
+@using BlazorVTPSolutions.Services;
+@using Blazorise;
+@inherits ComponentBase
+@inject Services.IEmpresaService EmpresaService
+@inject NavigationManager Navigation
+@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Teste - VTPSolutions</PageTitle>
+
+<div class="container-fluid">
+    <div class="bottom-border">
+        <h3>CRUD - Empresas / Clientes</h3>
+        <button class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/empresas/criar"))">Adicionar</button>
+    </div>
+
+    <br />
+
+    <div class="d-flex justify-content-between">
+        <div>
+            <input id="input_filtro" type="text" @bind="@itemPesquisa" placeholder="Procurar..." />
+        </div>
+        <div>
+            <div class="form-inline mb-3">
+                <label class="mr-2">Itens por página:</label>
+                <select class="form-select select-sm" style="display: initial;" id="pageSize" @onchange="MudarPageSize">
+                    <option value="" style="display:none">@pageSize</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @code {
+
+        public EmpresaList()
+        {
+            empresas = new List<Empresa>();
+            pageSize = 10;
+        }
+
+        List<Empresa> empresas { get; set; }
+        private string itemPesquisa { get; set; }
+
+        Empresa empresaExclusao { get; set; }
+
+        bool exibirModal = false;
+
+        int page = 1;
+        int pageSize;
+        int totalPages = 1;
+        int totalEmpresas = 0;
+
+        private string filtro;
+
+        private string colunaOrdenada = "";
+        private bool ordenacaoAscendente = true;
+
+        private void Ordenar(string propriedade)
+        {
+            if (colunaOrdenada == propriedade)
+            {
+                ordenacaoAscendente = !ordenacaoAscendente;
+            }
+            else
+            {
+                colunaOrdenada = propriedade;
+                ordenacaoAscendente = true;
+            }
+
+            // Ordenar a lista de empresas com base na propriedade selecionada e na ordem de classificação
+            if (typeof(IComparable).IsAssignableFrom(typeof(Empresa).GetProperty(propriedade)?.PropertyType))
+            {
+                empresas = ordenacaoAscendente ? empresas.OrderBy(e => e.GetType().GetProperty(propriedade)?.GetValue(e)).ToList() : empresas.OrderByDescending(e => e.GetType().GetProperty(propriedade)?.GetValue(e)).ToList();
+            }
+            else
+            {
+                empresas = ordenacaoAscendente ? empresas.OrderBy(e => Convert.ToString(e.GetType().GetProperty(propriedade)?.GetValue(e))).ToList() : empresas.OrderByDescending(e => Convert.ToString(e.GetType().GetProperty(propriedade)?.GetValue(e))).ToList();
+            }
+        }
+
+        private object GetPropriedade(Empresa empresa, string nome)
+        {
+            var propriedade = empresa.GetType().GetProperty(nome);
+
+            if (propriedade.PropertyType == typeof(Segmento))
+            {
+                return (propriedade.GetValue(empresa) as Segmento)?.Nome;
+            }
+            else
+            {
+                return propriedade.GetValue(empresa);
+            }
+        }
+
+        private async Task AtualizarEmpresas(int pagina)
+        {
+            page = pagina;
+            (empresas, totalEmpresas) = await EmpresaService.GetEmpresasAsync(pagina, pageSize);
+            totalPages = (int)Math.Ceiling((double)totalEmpresas / pageSize);
+        }
+
+        protected override async Task OnInitializedAsync()
+        {
+            await AtualizarEmpresas(page);
+        }
+
+        private void EditarEmpresa(Empresa empresa)
+        {
+            Navigation.NavigateTo($"/empresas/{empresa.oid}");
+        }
+
+        private void ExibirModalExclusao(Empresa empresa)
+        {
+            // fecha o modal de confirmação
+            empresaExclusao = empresa;
+            exibirModal = true;
+            StateHasChanged();
+        }
+
+        private async Task FecharModal()
+        {
+            exibirModal = false;
+            StateHasChanged();
+        }
+
+        private async Task DeletarEmpresa()
+        {
+            // exclui a empresa
+            await EmpresaService.DeleteEmpresaAsync(empresaExclusao.oid);
+            empresas.Remove(empresaExclusao);
+
+            FecharModal();
+
+            // aguarda um pequeno intervalo de tempo antes de exibir a mensagem de sucesso
+            await Task.Delay(500);
+
+            await JSRuntime.InvokeVoidAsync("alert", "Empresa excluída com sucesso!");
+        }
+
+        private IEnumerable<Empresa> listaFiltro
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(itemPesquisa))
+                {
+                    return empresas;
+                }
+                else
+                {
+                    return empresas.Where(x =>
+                    x.Nome.Contains(itemPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    x.Site.Contains(itemPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    x.SegmentoEmpresa.Nome.Contains(itemPesquisa, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+        }
+
+        private async Task MudarPageSize(ChangeEventArgs e)
+        {
+            pageSize = Convert.ToInt32(e.Value);
+            await AtualizarEmpresas(page);
+        }
+    }
+
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>                   
+                    <button class="transparent-button" @onclick="@(() => Ordenar("Nome"))">
+                        Nome
+                        <i class="@((colunaOrdenada == "Nome" && ordenacaoAscendente) ? "fas fa-arrow-up" : "fas fa-arrow-down") fa-solid"></i>
+                    </button>
+                </th>
+                <th>                   
+                    <button class="transparent-button" @onclick="@(() => Ordenar("Site"))">
+                        Site
+                        <span class="@((colunaOrdenada == "Site" && ordenacaoAscendente) ? "fas fa-arrow-up" : "fas fa-arrow-down")"></span>
+                    </button>
+                </th>
+                <th>                  
+                    <button class="transparent-button" @onclick="@(() => Ordenar("Segmento"))">
+                        Segmento
+                        <span class="@((colunaOrdenada == "Segmento" && ordenacaoAscendente) ? "fas fa-arrow-up" : "fas fa-arrow-down")"></span>
+                    </button>
+                </th>
+                <th style="text-align: right;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var empresa in listaFiltro)
+            {
+                <tr>
+                    <td>@empresa.Nome</td>
+                    <td>@empresa.Site</td>
+                    <td>@(empresa.SegmentoEmpresa == null ? "" : empresa.SegmentoEmpresa.Nome)</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-primary" @onclick="() => EditarEmpresa(empresa)">Editar</button>
+                        <button class="btn btn-danger" @onclick="() => ExibirModalExclusao(empresa)">Deletar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="row">
+        <div class="col-md-6">
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item @(page == 1 ? "disabled" : "")">
+                        <a class="page-link" href="" tabindex="-1" @onclick="async () => { page = 1; await AtualizarEmpresas(page); }">&lt;</a>
+                    </li>
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        int pageLocal = i;
+                        <li class="page-item @(page == i ? "active" : "")">
+                            <a class="page-link" href="" @onclick="async () => await AtualizarEmpresas(pageLocal)">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(page == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="" @onclick="async () => { page = totalPages; await AtualizarEmpresas(page); }">&gt;</a>
+                    </li>
+                </ul>               
+            </nav>
+        </div>
+        <div class="col-md-6" style="color: aliceblue">
+            <div class="text-right" style="text-align: right;">
+                Mostrando @((page - 1) * pageSize + 1) até @((page - 1) * pageSize + empresas.Count) de @totalEmpresas Registros
+            </div>
+        </div>
+    </div>
+
+
+    @*Modal de exclusão*@
+    <div class="modal fade show" tabindex="-1" role="dialog" style="display:@(exibirModal ? "block" : "none")">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmacaoExclusaoLabel">Confirmação de Exclusão</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="FecharModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir a empresa?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FecharModal">Cancelar</button>
+
+                    <button type="button" class="btn btn-danger" @onclick="@(async () => await DeletarEmpresa())">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

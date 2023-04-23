@@ -1,0 +1,7 @@
+﻿.segmento-selecionado {
+    background-color: #f2f2f2;
+}
+option.selected {
+    background-color: #f2f2f2;
+    color: #888;
+}
