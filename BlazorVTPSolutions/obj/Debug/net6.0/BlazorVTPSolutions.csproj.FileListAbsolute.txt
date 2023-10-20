@@ -1026,5 +1026,3 @@ C:\dev\BlazorVTPSolutions\BlazorVTPSolutions\bin\Debug\net6.0\wwwroot\_framework
 C:\dev\BlazorVTPSolutions\BlazorVTPSolutions\bin\Debug\net6.0\wwwroot\_framework\Blazorise.Icons.FontAwesome.dll.gz
 C:\dev\BlazorVTPSolutions\BlazorVTPSolutions\bin\Debug\net6.0\Blazorise.Icons.FontAwesome.dll
 C:\dev\BlazorVTPSolutions\BlazorVTPSolutions\obj\Debug\net6.0\build-gz\NVhh7+AB.gz
-C:\dev\BlazorVTPSolutions\BlazorVTPSolutions\bin\Debug\net6.0\package-lock.json
-C:\dev\BlazorVTPSolutions\BlazorVTPSolutions\bin\Debug\net6.0\package.json
