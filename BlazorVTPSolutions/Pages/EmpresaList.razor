@@ -135,7 +135,7 @@
             await EmpresaService.DeleteEmpresaAsync(empresaExclusao.oid);
             empresas.Remove(empresaExclusao);
 
-            FecharModal();
+            await FecharModal();
 
             // aguarda um pequeno intervalo de tempo antes de exibir a mensagem de sucesso
             await Task.Delay(500);

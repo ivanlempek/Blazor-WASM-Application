@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 
 
 namespace BlazorVTPSolutions.Services
@@ -15,63 +16,163 @@ namespace BlazorVTPSolutions.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ISegmentoService _segmentoService;
-
-        private Empresa _empresaSelecionada; // variável para armazenar a empresa selecionada
-
+        private Empresa? _empresaSelecionada; // variável para armazenar a empresa selecionada
 
         public EmpresaService(HttpClient httpClient, ISegmentoService segmentoService)
         {
-            _httpClient = httpClient;
-            _segmentoService = segmentoService;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _segmentoService = segmentoService ?? throw new ArgumentNullException(nameof(segmentoService));
         }
 
         public async Task<(List<Empresa>, int)> GetEmpresasAsync(int page, int pageSize)
         {
-            var response = await _httpClient.GetAsync($"/api/v1/dataset/64420e4bb510ceea93e0b0ed/611ed902fd5915f2ae005dbb?pageSize={pageSize}&apiKey=64420e39b510ceea93e0b0ea&page={page}");
-            response.EnsureSuccessStatusCode();
-            var jsonResult = await response.Content.ReadAsStringAsync();
-            JObject jObject = JObject.Parse(jsonResult);
-            var values = jObject.SelectToken("data").ToString();
-            
-            if (string.IsNullOrWhiteSpace(values))
-                return (new List<Empresa>(), 0);
+            try
+            {
+                var jsonResult = await FetchDataFromApiAsync(page, pageSize); 
 
-            var segmentos = await _segmentoService.GetSegmentosAsync();    
-            var empresas = JsonConvert.DeserializeObject<List<Empresa>>(values);
-    
+                if (string.IsNullOrWhiteSpace(jsonResult))
+                    return (new List<Empresa>(), 0);
+
+                var empresas = GetEmpresasFromJson(jsonResult);
+                await AssignSegmentosToEmpresas(empresas);
+
+                var totalEmpresas = GetTotalEmpresasFromJson(jsonResult);
+
+                return (empresas, totalEmpresas);
+
+            }
+            catch (Exception ex) 
+            {
+                throw new Exception($"Ocorreu algum erro ao consultar a API \nErro: { ex.Message }");
+            }
+            
+        }
+
+        public async Task<string> FetchDataFromApiAsync(int page, int pageSize)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"/api/v1/dataset/64420e4bb510ceea93e0b0ed/611ed902fd5915f2ae005dbb?pageSize={pageSize}&apiKey=64420e39b510ceea93e0b0ea&page={page}");
+
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ocorreu algum erro ao consultar a API \nErro: {ex.Message}"); 
+            }
+        }
+
+        public List<Empresa> GetEmpresasFromJson(string jsonResult)
+        {
+            JObject respostaJson = JObject.Parse(jsonResult);
+            var values = respostaJson.SelectToken("data");
+
+            if (values == null)
+            {
+                throw new ArgumentException("O JSON fornecido não contém o campo 'data'.");
+            }
+
+            var empresas = JsonConvert.DeserializeObject<List<Empresa>>(values.ToString()) ?? new List<Empresa>();
+
             foreach (var empresa in empresas)
             {
                 empresa.SetOidFromIdJObject();
-
-                empresa.SegmentoEmpresa = segmentos.FirstOrDefault(e => e.oid == empresa.SegmentoId);
             }
 
-            var totalEmpresas = jObject.SelectToken("total").Value<int>();
-            
+            return empresas;
+        }
 
-            //return empresas;
-            return (empresas, totalEmpresas);
+        public async Task AssignSegmentosToEmpresas(List<Empresa> empresas)
+        {
+            var segmentos = await _segmentoService.GetSegmentosAsync();
+
+            foreach (var empresa in empresas)
+            {
+                empresa.SegmentoEmpresa = segmentos.FirstOrDefault(e => e.oid == empresa.SegmentoId) ?? new Segmento();
+            }
+        }
+
+        public int GetTotalEmpresasFromJson(string jsonResult)
+        {
+            JObject respostaJson = JObject.Parse(jsonResult);
+            var totalEmpresas = respostaJson.SelectToken("total");
+
+            if (totalEmpresas == null)
+            {
+                throw new ArgumentException("O JSON fornecido não contém o campo 'total'.");
+            }
+
+            return totalEmpresas.Value<int>();
         }
 
         public async Task<Empresa> GetEmpresaAsync(string oid)
         {
+            try
+            {
+                var jsonResult = await FetchEmpresaDataFromApiAsync(oid);
+
+                var data = GetEmpresaFromJson(jsonResult);
+                var empresa = data.ToObject<Empresa>();
+
+                AssignOidSegmentoIdToEmpresa(empresa, jsonResult);
+
+                await AssignSegmentoToEmpresa(empresa);
+
+                _empresaSelecionada = empresa;
+
+                return empresa;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ocorreu algum erro ao consultar a API \nErro:  { ex.Message }");
+            }
+        }
+
+        private async Task<string> FetchEmpresaDataFromApiAsync(string oid)
+        {
             var response = await _httpClient.GetAsync($"/api/v1/dataset/64420e4bb510ceea93e0b0ed/611ed902fd5915f2ae005dbb?apiKey=64420e39b510ceea93e0b0ea&_id={oid}");
-            response.EnsureSuccessStatusCode();
-            var jsonResult = await response.Content.ReadAsStringAsync();
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        private JToken GetDataFromJsonResult(string jsonResult)
+        {
             var jObject = JObject.Parse(jsonResult);
-            var data = jObject["data"].First;
-            var empresa = data.ToObject<Empresa>();
+            var data = jObject["data"];
 
-            // Extrai o valor do SegmentoId do JToken correspondente e atribui na propriedade SegmentoId da empresa
-            empresa.SegmentoId = data["Segmento"]?["$oid"]?.ToString();
-            empresa.oid = data["_id"]?["$oid"]?.ToString();
+            if (data == null)
+            {
+                throw new ArgumentException("Erro ao realizar o Parse desse json.");
+            }
+
+            return data;
+        }
+
+        private JToken GetEmpresaFromJson(string jsonResult)
+        {
+
+            var data = GetDataFromJsonResult(jsonResult);
+
+            if (data?.First == null)
+            {
+                throw new ArgumentException("O JSON fornecido não contém o campo 'data'.");
+            }
+
+            return data.First;
+        }
+
+        private async Task AssignSegmentoToEmpresa(Empresa empresa)
+        {
             var segmentos = await _segmentoService.GetSegmentosAsync();
-            empresa.SegmentoEmpresa = segmentos.FirstOrDefault(e => e.oid == empresa.SegmentoId);
+            empresa.SegmentoEmpresa = segmentos.FirstOrDefault(e => e.oid == empresa.SegmentoId) ?? new Segmento();
+        }
 
-            // armazenar a empresa selecionada
-            _empresaSelecionada = empresa;
+        private void AssignOidSegmentoIdToEmpresa(Empresa empresa, string jsonResult)
+        {
+            var data = GetDataFromJsonResult(jsonResult);
+            var dataArray = data.First ?? throw new ArgumentException("Nenhum item encontrado no Array."); 
 
-            return empresa;
+            empresa.SegmentoId = dataArray["Segmento"]?["$oid"]?.ToString() ?? "SegmentoId não encontrado";
+            empresa.oid = dataArray["_id"]?["$oid"]?.ToString() ?? "OId da Empresa não encontrado";
         }
 
         public async Task<Empresa> CreateEmpresaAsync(Empresa empresa)
