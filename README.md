@@ -16,7 +16,7 @@ Este é um aplicativo web desenvolvido com Blazor WebAssembly para gerenciar emp
 
 ## Instalação e Uso
 - Certifique-se de ter instalado o SDK .NET 5.0 ou superior.
-- Clone este repositório: git clone [URL_DO_REPOSITÓRIO].
+- Clone este repositório: git clone https://github.com/ivanlmpk/Blazor-Webassembly-APP.git.
 - Navegue até a pasta do projeto e execute: dotnet run.
 - Abra o navegador e vá para http://localhost:5065 (ou o endereço que for mostrado no console).
 Comece a gerenciar suas empresas e clientes!
